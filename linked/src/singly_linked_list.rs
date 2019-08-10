@@ -5,29 +5,33 @@ use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct ListNode {
-    val: RefCell<i32>,
-    next: Option<Rc<ListNode>>,
+    val: i32,
+    next: Option<Rc<RefCell<ListNode>>>,
 }
 
 #[derive(Debug)]
 pub struct LinkedList {
-    head: Option<Rc<ListNode>>,
+    head: Option<Rc<RefCell<ListNode>>>,
+    tail: Option<Rc<RefCell<ListNode>>>,
 }
 
 impl LinkedList {
     fn new() -> LinkedList {
-        Self { head: None }
+        Self {
+            head: None,
+            tail: None,
+        }
     }
 
     fn push(&mut self, _val: i32) {
         let new_node = ListNode {
-            val: RefCell::new(_val),
-            next: match &self.head {
-                Some(head) => Some(Rc::clone(&head)),
-                None => None
-            },
+            val: _val,
+            next: None,
         };
-        self.head = Some(Rc::new(new_node));
+        match &self.tail {
+            Some(last) => last.borrow_mut().next = Some(Rc::new(RefCell::new(new_node))),
+            None => self.tail = Some(Rc::new(RefCell::new(new_node))),
+        }
     }
 }
 
