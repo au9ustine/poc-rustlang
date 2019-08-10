@@ -12,35 +12,38 @@ pub struct ListNode {
 #[derive(Debug)]
 pub struct LinkedList {
     head: Option<Rc<RefCell<ListNode>>>,
-    tail: Option<Rc<RefCell<ListNode>>>,
 }
 
 impl LinkedList {
     fn new() -> LinkedList {
-        Self {
-            head: None,
-            tail: None,
-        }
+        Self { head: None }
     }
 
     fn push(&mut self, _val: i32) {
-        let new_node = ListNode {
+        let new_node = Rc::new(RefCell::new(ListNode {
             val: _val,
             next: None,
-        };
-        match &self.tail {
-            Some(last) => last.borrow_mut().next = Some(Rc::new(RefCell::new(new_node))),
-            None => self.tail = Some(Rc::new(RefCell::new(new_node))),
+        }));
+        match &self.head {
+            Some(last) => {
+                last.borrow_mut().next = Some(Rc::clone(&new_node));
+            }
+            None => self.head = Some(Rc::clone(&new_node)),
         }
+    }
+
+    fn last(&mut self) {
+        let mut current = self.head.as_ref().map(|head| Rc::clone(&head));
     }
 }
 
 fn traverse() {
     let mut lst = LinkedList::new();
-    println!("{:?}", &lst);
+    println!("lst = {:?}", &lst);
     lst.push(2);
     lst.push(3);
-    println!("{:?}", &lst)
+    println!("lst = {:#?}", &lst.head);
+    lst.last()
 }
 
 #[cfg(test)]
