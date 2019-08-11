@@ -1,39 +1,63 @@
 #![allow(unused)]
 
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
 
-#[derive(Debug)]
-pub struct ListNode {
-    val: i32,
-    next: Option<Rc<RefCell<ListNode>>>,
-}
+type Link<T> = Option<Rc<RefCell<ListNode<T>>>>;
 
 #[derive(Debug)]
-pub struct LinkedList {
-    head: Option<Rc<RefCell<ListNode>>>,
+pub struct ListNode<T> {
+    val: T,
+    next: Link<T>,
 }
 
-impl LinkedList {
-    fn new() -> LinkedList {
-        Self { head: None }
-    }
-
-    fn push(&mut self, _val: i32) {
-        let new_node = Rc::new(RefCell::new(ListNode {
-            val: _val,
+impl<T> ListNode<T> {
+    fn new(elem: T) -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(ListNode {
+            val: elem,
             next: None,
-        }));
-        match &self.head {
-            Some(last) => {
-                last.borrow_mut().next = Some(Rc::clone(&new_node));
-            }
-            None => self.head = Some(Rc::clone(&new_node)),
+        }))
+    }
+}
+
+#[derive(Debug)]
+pub struct LinkedList<T> {
+    head: Link<T>,
+    tail: Link<T>,
+}
+
+impl<T> LinkedList<T> {
+    fn new() -> Self {
+        Self {
+            head: None,
+            tail: None,
         }
     }
 
-    fn last(&mut self) {
-        let mut current = self.head.as_ref().map(|head| Rc::clone(&head));
+    fn push(&mut self, _val: T) {
+        let new_node = ListNode::new(_val);
+        match self.tail.take() {
+            Some(last) => {
+                last.borrow_mut().next = Some(Rc::clone(&new_node));
+                self.tail = Some(new_node)
+            }
+            None => {
+                self.head = Some(Rc::clone(&new_node));
+                self.tail = Some(new_node)
+            }
+        }
+    }
+
+    fn peek(&self) -> Option<Ref<T>> {
+        self.tail
+            .as_ref()
+            .map(|node| Ref::map(node.borrow(), |node| &node.val))
+    }
+
+    fn peek_mut(&self) -> Option<RefMut<T>> {
+        self.tail
+            .as_ref()
+            .map(|node| RefMut::map(node.borrow_mut(), |node| &mut node.val))
     }
 }
 
@@ -42,8 +66,11 @@ fn traverse() {
     println!("lst = {:?}", &lst);
     lst.push(2);
     lst.push(3);
-    println!("lst = {:#?}", &lst.head);
-    lst.last()
+    println!("lst = {:?}", &lst.head);
+    println!("lst = {:?}", &lst.tail);
+    println!("last = {:?}", &lst.peek());
+    *lst.peek_mut().unwrap() = 4;
+    println!("last = {:?}", &lst.tail)
 }
 
 #[cfg(test)]
